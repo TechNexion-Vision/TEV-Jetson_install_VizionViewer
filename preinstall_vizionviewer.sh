@@ -3,6 +3,7 @@
 VIZION_DEB_DIR="/usr/share/vizionviewer"
 VIZION_SDK_DEB="vizionsdk.deb"
 VIZION_VIEWER_DEB="vizionviewer.deb"
+DEMO_BIN="TechNexion_8_Cam_Demo"
 
 error_exit() {
     echo "ERROR: $1" >&2
@@ -44,6 +45,7 @@ LDK_DIR=$(cd "$(dirname "$0")" && pwd);
 LDK_DIR="${LDK_DIR}/Linux_for_Tegra"
 ROOTFS_PATH="./rootfs"
 DPKG_STATUS="./rootfs/var/lib/dpkg/status"
+DM_FILE=$(basename $(ls ${LDK_DIR}/${ROOTFS_PATH}/jetpack_8_cam_demo_patch_for_*.tar.xz))
 
 cd ${LDK_DIR}
 # Check if rootfs directory exists
@@ -60,7 +62,8 @@ fi
 # check if VizionViewer is intalled or not
 VV_ins=$(grep "Package: vizionviewer" -A1 ${DPKG_STATUS} | grep "install ok installed")
 VS_ins=$(grep "Package: vizionsdk" -A1 ${DPKG_STATUS} | grep "install ok installed")
-if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ]; then
+DM_bin=$(ls ${ROOTFS_PATH}/opt/vizionviewer/bin | grep ${DEMO_BIN})
+if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ] && [ -n "$DM_bin" ]; then
     echo "VizionViewer had installed. Exiting install process."
     exit 0
 fi
@@ -80,7 +83,6 @@ chroot "${ROOTFS_PATH}" /bin/bash -c "
     apt install -y libv4l2rds0 || exit 1
     apt install -y v4l-utils || exit 1
     apt install -y nvidia-l4t-gstreamer || exit 1
-    
 
     echo '--- Inside chroot: Installing ${VIZION_SDK_DEB} ---'
     cd ${VIZION_DEB_DIR} || exit 1
@@ -89,11 +91,18 @@ chroot "${ROOTFS_PATH}" /bin/bash -c "
     echo '--- Inside chroot: Installing ${VIZION_VIEWER_DEB} ---'
     apt install -y ./${VIZION_VIEWER_DEB} || exit 1
 
-    echo '--- Inside chroot: Cleaning APT cache ---'
-    apt clean
+    #echo '--- Inside chroot: Cleaning APT cache ---'
+    #apt clean
 
     echo '--- Inside chroot: Removing .deb files ---'
     rm ${VIZION_SDK_DEB} ${VIZION_VIEWER_DEB}
+
+    echo '--- Moving TechNexion_8_Cam_Demo into rootfs ---'
+    cd /
+    tar -xf ${DM_FILE} || exit 1
+    sed -i 's|cp|mv|g' install_8_cam_demo.sh
+    ./install_8_cam_demo.sh 2>/dev/null || exit 1
+    mv install_8_cam_demo.sh /opt/vizionviewer/
 
     echo '--- Inside chroot: Package installation complete ---'
 " || error_exit "Chroot internal installation script failed."
