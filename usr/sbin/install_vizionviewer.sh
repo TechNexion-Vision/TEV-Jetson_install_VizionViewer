@@ -14,7 +14,3 @@ sudo -u ubuntu DISPLAY=$(w| tr -s ' '| cut -d ' ' -f 3|grep :) \
 echo '***********************************' > /dev/ttyTCU0
 echo 'Install VizionViewer FINISH!!!' > /dev/ttyTCU0
 echo '***********************************' > /dev/ttyTCU0
-
-sleep 10
-sudo chmod 777 /usr/sbin/install_demo_script.sh
-sudo -u ubuntu /usr/sbin/install_demo_script.sh

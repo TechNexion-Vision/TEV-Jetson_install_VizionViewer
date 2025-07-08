@@ -14,15 +14,16 @@ if [ -z ${TEK_ORIN} ] && [ -z ${TN316_ORIN} ];then
 	return 0
 fi
 
+AUTOSSTART_FILE_PATH="/home/ubuntu/.config/autostart/setup_technexion_8_cam_demo.desktop"
 DEMO_SCRIPT='/home/ubuntu/Desktop/TechNexion_8_Cam_Demo.desktop'
 cp -rv /usr/share/applications/TechNexion_8_Cam_Demo.desktop ${DEMO_SCRIPT}
 
 chmod a+x ${DEMO_SCRIPT}
-export DISPLAY=$(w| tr -s ' '| cut -d ' ' -f 3|grep :)
-export XAUTHORITY=/home/ubuntu/.Xauthority
-echo ubuntu | sudo -S -u ubuntu dbus-launch gio set ${DEMO_SCRIPT} metadata::trusted true
-sleep 5
-echo ubuntu | sudo -S systemctl restart gdm
+gio set ${DEMO_SCRIPT} metadata::trusted true
+
+if [ -f "$AUTOSSTART_FILE_PATH" ]; then
+    rm -f "$AUTOSSTART_FILE_PATH"
+fi
 
 echo '***********************************' > /dev/ttyTCU0
 echo 'Install Demo Script FINISH!!!' > /dev/ttyTCU0

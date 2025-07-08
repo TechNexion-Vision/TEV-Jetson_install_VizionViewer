@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Setup TechNexion 8 Cam Demo Icon
+Exec=/usr/sbin/install_demo_script.sh
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
