@@ -12,4 +12,4 @@ This repository contains scripts for setting up the systemd for **VizionViewer**
 
 For detailed instructions on how to install and configure **VizionViewer**, please refer to the official documentation:
 
-[TechNexion VizionViewer Overview](https://developer.technexion.com/docs/vizionviewer-overview)
+[TechNexion VizionViewer Overview](https://tn-docusaurus.vercel.app/docs/vision-software/vizionviewer)
