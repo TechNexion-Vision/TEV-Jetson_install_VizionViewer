@@ -1,5 +1,6 @@
 [Unit]
 Description=install VizionViewer service
+After=multi-user.target graphical.target
 
 [Service]
 Type=oneshot
