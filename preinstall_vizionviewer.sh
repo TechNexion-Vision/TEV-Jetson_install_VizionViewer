@@ -40,12 +40,30 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+skip_demo=0
+while getopts ":-:" o; do
+	case "${o}" in
+	-) case ${OPTARG} in
+		skip-demo)
+			skip_demo=1
+			;;
+		*) usage allunknown 1; ;;
+		esac;;
+        *)
+		usage
+		;;
+	esac
+done
+shift $((OPTIND-1))
+
 # Set rootfs path
 LDK_DIR=$(cd "$(dirname "$0")" && pwd);
 LDK_DIR="${LDK_DIR}/Linux_for_Tegra"
 ROOTFS_PATH="./rootfs"
 DPKG_STATUS="./rootfs/var/lib/dpkg/status"
-DM_FILE=$(basename $(ls ${LDK_DIR}/${ROOTFS_PATH}/jetpack_8_cam_demo_patch_for_*.tar.xz))
+if [[ ${skip_demo} -eq 0 ]]; then
+    DM_FILE=$(basename $(ls ${LDK_DIR}/${ROOTFS_PATH}/jetpack_8_cam_demo_patch_for_*.tar.xz))
+fi
 
 cd ${LDK_DIR}
 # Check if rootfs directory exists
@@ -62,10 +80,17 @@ fi
 # check if VizionViewer is intalled or not
 VV_ins=$(grep "Package: vizionviewer" -A1 ${DPKG_STATUS} | grep "install ok installed")
 VS_ins=$(grep "Package: vizionsdk" -A1 ${DPKG_STATUS} | grep "install ok installed")
-DM_bin=$(ls ${ROOTFS_PATH}/opt/vizionviewer/bin | grep ${DEMO_BIN})
-if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ] && [ -n "$DM_bin" ]; then
-    echo "VizionViewer had installed. Exiting install process."
-    exit 0
+if [[ ${skip_demo} -eq 0 ]]; then
+    DM_bin=$(ls ${ROOTFS_PATH}/opt/vizionviewer/bin | grep ${DEMO_BIN})
+    if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ] && [ -n "$DM_bin" ]; then
+        echo "VizionViewer had installed. Exiting install process."
+        exit 0
+    fi
+else
+    if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ]; then
+        echo "VizionViewer had installed. Exiting install process."
+        exit 0
+    fi
 fi
 
 # Prepare the chroot environment (mount virtual filesystems)
@@ -97,12 +122,14 @@ chroot "${ROOTFS_PATH}" /bin/bash -c "
     echo '--- Inside chroot: Removing .deb files ---'
     rm ${VIZION_SDK_DEB} ${VIZION_VIEWER_DEB}
 
-    echo '--- Moving TechNexion_8_Cam_Demo into rootfs ---'
-    cd /
-    tar -xf ${DM_FILE} || exit 1
-    sed -i 's|cp|mv|g' install_8_cam_demo.sh
-    ./install_8_cam_demo.sh 2>/dev/null || exit 1
-    mv install_8_cam_demo.sh /opt/vizionviewer/
+    if [[ ${skip_demo} -eq 0 ]]; then
+        echo '--- Moving TechNexion_8_Cam_Demo into rootfs ---'
+        cd /
+        tar -xf ${DM_FILE} || exit 1
+        sed -i 's|cp|mv|g' install_8_cam_demo.sh
+        ./install_8_cam_demo.sh 2>/dev/null || exit 1
+        mv install_8_cam_demo.sh /opt/vizionviewer/
+    fi
 
     echo '--- Inside chroot: Package installation complete ---'
 " || error_exit "Chroot internal installation script failed."
