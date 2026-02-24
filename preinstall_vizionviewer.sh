@@ -133,6 +133,7 @@ chroot "${ROOTFS_PATH}" /bin/bash -c "
 
 	echo '--- Inside chroot: Adding I2C permissions ---'
 	usermod -aG i2c ubuntu
+	usermod -aG gpio ubuntu
 
     echo '--- Inside chroot: Package installation complete ---'
 " || error_exit "Chroot internal installation script failed."
