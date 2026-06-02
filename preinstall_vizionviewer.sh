@@ -80,14 +80,14 @@ fi
 # check if VizionViewer is intalled or not
 VV_ins=$(grep "Package: vizionviewer" -A1 ${DPKG_STATUS} | grep "install ok installed")
 VS_ins=$(grep "Package: vizionsdk" -A1 ${DPKG_STATUS} | grep "install ok installed")
+DM_bin=$(ls ${ROOTFS_PATH}/opt/vizionviewer/bin | grep ${DEMO_BIN})
 if [[ ${skip_demo} -eq 0 ]]; then
-    DM_bin=$(ls ${ROOTFS_PATH}/opt/vizionviewer/bin | grep ${DEMO_BIN})
     if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ] && [ -n "$DM_bin" ]; then
-        echo "VizionViewer had installed. Exiting install process."
+        echo "VizionViewer and 8cam demo had installed. Exiting install process."
         exit 0
     fi
 else
-    if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ]; then
+    if [ -n "${VV_ins}" ] && [ -n "$VS_ins" ] && [ ! -n "$DM_bin" ]; then
         echo "VizionViewer had installed. Exiting install process."
         exit 0
     fi
@@ -127,14 +127,20 @@ chroot "${ROOTFS_PATH}" /bin/bash -c "
         cd /
         tar -xf ${DM_FILE} || exit 1
         sed -i 's|cp|mv|g' install_8_cam_demo.sh
+        sed -i 's|vizionviewer/bin|vizionviewer/bin/|g' install_8_cam_demo.sh
+        mkdir -p /opt/vizionviewer/bin
         ./install_8_cam_demo.sh 2>/dev/null || exit 1
         mv install_8_cam_demo.sh /opt/vizionviewer/
+    else
+        if [[ -e /opt/vizionviewer/bin/${DEMO_BIN} ]]; then
+            /opt/vizionviewer/uninstall_8_cam_demo.sh 2>/dev/null
+            rm -rf /opt/vizionviewer/bin
+        fi
     fi
 
 	echo '--- Inside chroot: Adding I2C permissions ---'
 	usermod -aG i2c ubuntu
 	usermod -aG gpio ubuntu
-
     echo '--- Inside chroot: Package installation complete ---'
 " || error_exit "Chroot internal installation script failed."
 
